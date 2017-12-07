@@ -8,7 +8,12 @@ import com.db.awmd.challenge.domain.Transfer;
 import com.db.awmd.challenge.exception.DuplicateAccountIdException;
 import com.db.awmd.challenge.exception.NegativeBalanceException;
 import com.db.awmd.challenge.service.AccountsService;
+
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -51,7 +56,7 @@ public class AccountsServiceTest {
   }
 
   @Test
-  public void transferMoney () {
+  public void transferMoney() {
     this.accountsService.createAccount(new Account("ID-12345", BigDecimal.valueOf(1000)));
     this.accountsService.createAccount(new Account("ID-98765", BigDecimal.valueOf(1000)));
     this.accountsService.transfer("ID-12345", new Transfer("ID-98765", BigDecimal.valueOf(100)));
@@ -69,44 +74,43 @@ public class AccountsServiceTest {
   }
 
 
-
-  public void transferMoneyMultiThreaded () throws InterruptedException {
+  @Test
+  public void transferMoneyMultiThreaded() throws InterruptedException {
     this.accountsService.createAccount(new Account("ID-123456", BigDecimal.valueOf(1000)));
     this.accountsService.createAccount(new Account("ID-987656", BigDecimal.valueOf(1000)));
 
-    Runnable task1 = () -> {
-      this.accountsService.transfer("ID-123456", new Transfer("ID-987656", BigDecimal.valueOf(100)));
+    Callable<Boolean> transferFromID123456To987656 = () -> {
+      Thread.sleep(5000);
+      return this.accountsService.transfer("ID-123456", new Transfer("ID-987656", BigDecimal.valueOf(100)));
     };
 
-    Runnable task2 = () -> {
-      this.accountsService.transfer("ID-987656", new Transfer("ID-123456", BigDecimal.valueOf(200)));
+    Callable<Boolean> transferFrom987656To123456 = () -> {
+      return this.accountsService.transfer("ID-987656", new Transfer("ID-123456", BigDecimal.valueOf(200)));
     };
 
-    Thread t1 = new Thread(task1);
-    Thread t2 = new Thread(task1);
-    Thread t3 = new Thread(task1);
-    Thread t4 = new Thread(task1);
+    Collection<Callable<Boolean>> callableList = Arrays.asList(
+        transferFromID123456To987656,
+        transferFromID123456To987656,
+        transferFromID123456To987656,
+        transferFromID123456To987656,
+        transferFrom987656To123456,
+        transferFrom987656To123456,
+        transferFrom987656To123456
+    );
 
+    ExecutorService executor = Executors.newFixedThreadPool(8);
 
-    Thread t5 = new Thread(task2);
-    Thread t6 = new Thread(task2);
-    Thread t7 = new Thread(task2);
-
-    t1.start();
-    t2.start();
-    t3.start();
-    t4.start();
-    t5.start();
-    t6.start();
-    t7.start();
-
-    t1.join();
-    t2.join();
-    t3.join();
-    t4.join();
-    t5.join();
-    t6.join();
-    t7.join();
+    executor
+        .invokeAll(callableList)
+        .stream()
+        .map(future -> {
+          try {
+            return future.get();
+          } catch (Exception e) {
+            throw new IllegalStateException(e);
+          }
+        })
+        .forEach(System.out::println);
 
     assertThat(this.accountsService.getAccount("ID-123456").getBalance().get()).isEqualTo(BigDecimal.valueOf(1200));
     assertThat(this.accountsService.getAccount("ID-987656").getBalance().get()).isEqualTo(BigDecimal.valueOf(800));
