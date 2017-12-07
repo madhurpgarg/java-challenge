@@ -48,6 +48,10 @@ public class AccountsService {
     }
     fromAccount.debit(transfer.getAmount());
     toAccount.credit(transfer.getAmount());
+
+    notificationService.notifyAboutTransfer(fromAccount, "Amount: " +transfer.getAmount() + " has been transferred to " + toAccount.getAccountId());
+    notificationService.notifyAboutTransfer(toAccount, "Amount: " +transfer.getAmount() + " has been received from " + fromAccount.getAccountId());
+
     return fromAccount.addTransfer(transfer);
   }
 }
