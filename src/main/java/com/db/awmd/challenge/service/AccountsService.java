@@ -32,20 +32,17 @@ public class AccountsService {
   }
 
   public Account getAccount(String accountId) {
-    return this.accountsRepository.getAccount(accountId);
+    Account account = this.accountsRepository.getAccount(accountId);
+    if (account == null) {
+      throw new AccountNotFound(accountId + " account number not available");
+    }
+    return account;
   }
 
   public Boolean transfer(String fromAccountId, Transfer transfer) {
 
     Account fromAccount = getAccount(fromAccountId);
-    if (fromAccount == null) {
-      throw new AccountNotFound(fromAccountId + " account number not available");
-    }
-
     Account toAccount = getAccount(transfer.getToAccountId());
-    if (toAccount == null) {
-      throw new AccountNotFound(transfer.getToAccountId() + " account number not available");
-    }
 
     boolean transferSuccessful =  fromAccount.transfer(toAccount, transfer);
 

@@ -135,7 +135,7 @@ public class AccountsControllerTest {
         .perform(
             post("/v1/accounts/" + fromAccount.getAccountId() + "/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"toAccountId\":\"" +toAccount.getAccountId()+ "\",\"amount\": 125}")
+                .content("{\"toAccountId\":\"" +toAccount.getAccountId()+ "\",\"amount\": 1500}")
         )
         .andExpect(status().isBadRequest());
   }

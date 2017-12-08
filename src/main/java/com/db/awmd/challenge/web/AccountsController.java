@@ -2,6 +2,7 @@ package com.db.awmd.challenge.web;
 
 import com.db.awmd.challenge.domain.Account;
 import com.db.awmd.challenge.domain.Transfer;
+import com.db.awmd.challenge.exception.AccountNotFound;
 import com.db.awmd.challenge.exception.DuplicateAccountIdException;
 import com.db.awmd.challenge.exception.NegativeBalanceException;
 import com.db.awmd.challenge.service.AccountsService;
@@ -61,12 +62,12 @@ public class AccountsController {
 
         return new ResponseEntity<>(transfer, HttpStatus.ACCEPTED);
       }
-    } catch (NegativeBalanceException nbe) {
+    } catch (NegativeBalanceException | AccountNotFound e) {
       log.error(
           "Transfer of amount {} from account '{}' to account '{}' failed",
           transfer.getAmount(), accountId,
           transfer.getToAccountId());
-      return new ResponseEntity<>(nbe.getMessage(), HttpStatus.BAD_REQUEST);
+      return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     log.error(
