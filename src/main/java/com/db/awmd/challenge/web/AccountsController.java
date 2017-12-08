@@ -47,16 +47,32 @@ public class AccountsController {
 
   @PostMapping(path = "/{accountId}/transactions", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<?> transfer(@PathVariable String accountId, @RequestBody @Valid Transfer transfer) {
-    log.info("Transferring amount {} from account '{}' to account '{}'", transfer.getAmount(), accountId, transfer.getToAccountId());
+    log.info(
+        "Transferring amount {} from account '{}' to account '{}'",
+        transfer.getAmount(), accountId,
+        transfer.getToAccountId());
 
     try {
       if (this.accountsService.transfer(accountId, transfer)) {
+        log.info(
+            "Transfer of amount {} from account '{}' to account '{}' successful",
+            transfer.getAmount(),
+            accountId, transfer.getToAccountId());
+
         return new ResponseEntity<>(transfer, HttpStatus.ACCEPTED);
       }
     } catch (NegativeBalanceException nbe) {
+      log.error(
+          "Transfer of amount {} from account '{}' to account '{}' failed",
+          transfer.getAmount(), accountId,
+          transfer.getToAccountId());
       return new ResponseEntity<>(nbe.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
+    log.error(
+        "Transfer of amount {} from account '{}' to account '{}' failed",
+        transfer.getAmount(),
+        accountId, transfer.getToAccountId());
     return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
   }
 

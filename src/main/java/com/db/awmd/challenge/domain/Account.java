@@ -43,6 +43,11 @@ public class Account {
     return this.balance.accumulateAndGet(amount, BigDecimal::add);
   }
 
+  public boolean transfer(Account toAccount, Transfer transfer) {
+    this.debit(transfer.getAmount());
+    toAccount.credit(transfer.getAmount());
+    return addTransfer(transfer);
+  }
 
   public Boolean addTransfer(Transfer transaction) {
     return transactionList.add(transaction);
@@ -57,8 +62,7 @@ public class Account {
   }
 
   @JsonCreator
-  public Account(@JsonProperty("accountId") String accountId,
-    @JsonProperty("balance") BigDecimal balance) {
+  public Account(@JsonProperty("accountId") String accountId, @JsonProperty("balance") BigDecimal balance) {
     this.accountId = accountId;
     this.balance = new AtomicReference<>(balance);
     this.transactionList = new ArrayList<>();
